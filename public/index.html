@@ -8,6 +8,50 @@
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9;">
 
     <header style="background-color: #333; color: white; padding: 20px 40px;">
+        <script src="/public/hash.js"></script>
+        <script>
+            var startTime = performance.now();
+            console.log("hello")
+            //Wait until the Wasm module is ready
+            createModule().then(Module => {
+                console.log("Wasm module is ready!");
+                const result = Module._main(); // Call the exported C function
+                console.log("C Result: ", result);
+                var endTime = performance.now();
+                console.log("Time taken to load the C module: " + (endTime - startTime) + " milliseconds");
+            });
+        </script>
+
+        <script type="module">
+            import init, { md5_hash } from "/public/hello-wasm/pkg/hello_wasm.js";
+            var startTime = performance.now();
+            function getCookie(name) {
+                let cookieArr = document.cookie.split(";");
+
+                for (let i = 0; i < cookieArr.length; i++) {
+                    let cookie = cookieArr[i].trim(); 
+                    if (cookie.startsWith(name + "=")) {
+                        return cookie.substring(name.length + 1); 
+                    }
+                }
+                return null; 
+            }
+
+            init().then(() => {
+                //   greet("WebAssembly");
+                // console.log("rust addition: ",add(3,4));
+                let uzmf = getCookie("__uzmfj2");
+                let currentUrl = window.location.href;
+                if(uzmf == null) {
+                    uzmf="static uzmf"
+                } 
+                console.log("uzmf: ", uzmf);
+                console.log("currentUrl: ", currentUrl);
+                console.log("rust md5: ", md5_hash(uzmf, currentUrl));
+                var endTime = performance.now();
+                console.log("Time taken to load the rust module: " + (endTime - startTime) + " milliseconds");
+            });
+        </script>
 
         <h1 style="margin: 0;">My Express Website</h1>
         <nav>
@@ -31,6 +75,46 @@
             </ul>
         </div>
     </main>
+
+    <!-- For python module see below -->
+    <!-- <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <script>
+        async function main() {
+            const pyodide = await loadPyodide();
+            const result = await pyodide.runPythonAsync(`
+                def add(a, b):
+                    return a + b
+
+                add(2, 3)
+            `);
+            console.log("Python result:", result);  // Should log 5
+        }
+        main();
+    </script>
+    <div style="text-align: center; margin-top: 100px;">
+        <h2>Hash with MD5 using Python + WebAssembly</h2>
+        <input type="text" id="inputText" placeholder="Enter text">
+        <button onclick="hashText()">Hash</button>
+        <p><strong>MD5:</strong> <span id="output"></span></p>
+    </div>
+    <script>
+        async function loadPyodideAndPackages() {
+            window.pyodide = await loadPyodide();
+        }
+
+        async function hashText() {
+            const text = document.getElementById("inputText").value;
+            const code = `
+                import hashlib
+                hashlib.md5("${text}".encode()).hexdigest()
+        `;
+            const md5Hash = await pyodide.runPythonAsync(code);
+            document.getElementById("output").innerText = md5Hash;
+        }
+
+        loadPyodideAndPackages();
+    </script> -->
+
     <footer style="background-color: #333; color: white; text-align: center; padding: 20px;">
         &copy; 2025 My Express Website
     </footer>
