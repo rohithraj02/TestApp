@@ -3,28 +3,72 @@
 
 <head>
     <title>Sample Express App Page</title>
+    <!-- <script>
+        (function (w, d, e, u, c, g, a, b) {
+            w["SSJSConnectorObj"] = w["SSJSConnectorObj"] || { ss_cid: c, domain_info: "auto" };
+            w[g] = function (i, j) { w["SSJSConnectorObj"][i] = j };
+            a = d.createElement(e);
+            a.async = true;
+            if (navigator.userAgent.indexOf('MSIE') !== -1
+                || navigator.appVersion.indexOf('Trident/') > -1) {
+                u = u.replace("/advanced/", "/advanced/ie/");
+            }
+            a.src = u;
+            b = d.getElementsByTagName(e)[0];
+            b.parentNode.insertBefore(a, b);
+
+        })(window, document, "script", "https://storage.googleapis.com/ss-js-cdn/test/cdn/build/stormcaster.js", "cspt", "ssConf");
+
+        ssConf("c1", "https://cas.avalon.perfdrive.com");
+        ssConf("au", "35.193.94.221");
+    </script> -->
 </head>
 
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9;">
 
     <header style="background-color: #333; color: white; padding: 20px 40px;">
-        <script src="/public/hash.js"></script>
+        <!-- <script src="/public/hash.js"></script>
         <script>
             var startTime = performance.now();
-            console.log("hello")
             //Wait until the Wasm module is ready
             createModule().then(Module => {
-                console.log("Wasm module is ready!");
+                // console.log("Wasm module is ready!");
                 const result = Module._main(); // Call the exported C function
                 console.log("C Result: ", result);
                 var endTime = performance.now();
                 console.log("Time taken to load the C module: " + (endTime - startTime) + " milliseconds");
             });
-        </script>
-
+        </script> -->
+<!-- 1633 -->
         <script type="module">
             import init, { md5_hash } from "/public/hello-wasm/pkg/hello_wasm.js";
-            var startTime = performance.now();
+            let wasmReady;
+            const initializeWasm = async () => {
+                const startTime = performance.now();
+                await init();
+                const endTime = performance.now();
+                console.log("WASM initialization: " + (endTime - startTime) + " milliseconds");
+            };
+
+            // Initialize immediately when script loads
+            wasmReady = initializeWasm();
+
+            // Function to compute hash using initialized instance
+            async function computeHash(uzmf, url) {
+                // Wait for initialization only once
+                if (wasmReady) {
+                    await wasmReady;
+                    wasmReady = null; // Clear after first use
+                }
+
+                const start = performance.now();
+                const result = md5_hash(uzmf, url);
+                const end = performance.now();
+                console.log("Hash computation time: " + (end - start) + " milli seconds");
+                return result;
+            }
+
+            // Usage remains the same
             function getCookie(name) {
                 let cookieArr = document.cookie.split(";");
 
@@ -37,19 +81,11 @@
                 return null; 
             }
 
-            init().then(() => {
-                //   greet("WebAssembly");
-                // console.log("rust addition: ",add(3,4));
-                let uzmf = getCookie("__uzmfj2");
-                let currentUrl = window.location.href;
-                if(uzmf == null) {
-                    uzmf="static uzmf"
-                } 
-                console.log("uzmf: ", uzmf);
-                console.log("currentUrl: ", currentUrl);
-                console.log("rust md5: ", md5_hash(uzmf, currentUrl));
-                var endTime = performance.now();
-                console.log("Time taken to load the rust module: " + (endTime - startTime) + " milliseconds");
+            // Example usage
+            let uzmf = getCookie("__uzmf") || "static uzmf";
+            let currentUrl = window.location.href;
+            computeHash(uzmf, currentUrl).then(hash => {
+                console.log("rust md5:", hash);
             });
         </script>
 
@@ -65,6 +101,7 @@
         <p style="line-height: 1.6; color: #555;">
             This is a sample page served by an Express.js app. It includes basic HTML structure and inline CSS styling.
         </p>
+
         <div
             style="margin-top: 30px; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1);">
             <h3 style="margin-top: 0;">Features:</h3>
@@ -74,7 +111,37 @@
                 <li>Easy to integrate into your Express routes</li>
             </ul>
         </div>
+
+        <!-- New Section for AJAX response -->
+        <div id="ajax-data-container"
+            style="margin-top: 30px; background-color: #e8f7fc; padding: 20px; border-radius: 8px;">
+            <h3>AJAX Data:</h3>
+            <p id="ajax-data">Loading data...</p>
+        </div>
+
+        <script>
+            // Making an AJAX call when the page loads
+            document.addEventListener('DOMContentLoaded', function () {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', '/get-ajax-data', true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); // classic AJAX header
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            // const result = JSON.parse(xhr.responseText);
+                            document.getElementById('ajax-data').innerHTML = xhr.responseText;
+                        } else {
+                            document.getElementById('ajax-data').textContent = 'Failed to load data.';
+                        }
+                    }
+                };
+
+                xhr.send();
+            });
+        </script>
     </main>
+
 
     <!-- For python module see below -->
     <!-- <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
@@ -118,6 +185,7 @@
     <footer style="background-color: #333; color: white; text-align: center; padding: 20px;">
         &copy; 2025 My Express Website
     </footer>
+
 
 </body>
 
